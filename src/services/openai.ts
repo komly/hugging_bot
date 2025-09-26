@@ -47,6 +47,10 @@ export class OpenAIService {
       });
 
       // Get the base64 image and convert to buffer
+      if (!response.data || !response.data[0]) {
+        throw new Error('No image data received from OpenAI');
+      }
+      
       const imageBase64 = response.data[0].b64_json;
       if (!imageBase64) {
         throw new Error('No image data received from OpenAI');
