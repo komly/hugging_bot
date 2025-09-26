@@ -30,17 +30,13 @@ RUN pnpm db:generate
 # Build the application
 RUN pnpm build
 
-# Create non-root user
-RUN addgroup -g 1001 -S nodejs
-RUN adduser -S nextjs -u 1001
+# Create non-root user for bot
+RUN addgroup -g 1001 -S botuser
+RUN adduser -S botuser -u 1001
 
 # Change ownership of the app directory
-RUN chown -R nextjs:nodejs /app
-USER nextjs
+RUN chown -R botuser:botuser /app
+USER botuser
 
-# Expose port
-EXPOSE 3000
-
-
-# Start the application
+# Start the Telegram bot
 CMD ["pnpm", "start"]
