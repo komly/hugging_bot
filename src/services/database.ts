@@ -12,30 +12,44 @@ export class DatabaseService {
     firstName?: string;
     lastName?: string;
   }): Promise<User> {
-    const existingUser = await this.prisma.user.findUnique({
-      where: { telegramId },
-    });
-
-    if (existingUser) {
-      // Update user data if it has changed
-      return await this.prisma.user.update({
+    try {
+      const existingUser = await this.prisma.user.findUnique({
         where: { telegramId },
+      });
+
+      if (existingUser) {
+        // Update user data if it has changed
+        return await this.prisma.user.update({
+          where: { telegramId },
+          data: {
+            username: userData.username,
+            firstName: userData.firstName,
+            lastName: userData.lastName,
+          },
+        });
+      }
+
+      return await this.prisma.user.create({
         data: {
+          telegramId,
           username: userData.username,
           firstName: userData.firstName,
           lastName: userData.lastName,
         },
       });
+    } catch (error: any) {
+      // Handle unique constraint error (race condition)
+      if (error.code === 'P2002' && error.meta?.target?.includes('telegramId')) {
+        // User was created by another request, fetch and return it
+        const user = await this.prisma.user.findUnique({
+          where: { telegramId },
+        });
+        if (user) {
+          return user;
+        }
+      }
+      throw error;
     }
-
-    return await this.prisma.user.create({
-      data: {
-        telegramId,
-        username: userData.username,
-        firstName: userData.firstName,
-        lastName: userData.lastName,
-      },
-    });
   }
 
   async canUserGenerate(userId: number): Promise<boolean> {
