@@ -1,0 +1,77 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                Int      @id @default(autoincrement())
+  telegramId        String   @unique
+  username          String?
+  firstName         String?
+  lastName          String?
+  generationsUsed   Int      @default(0)
+  paidGenerations   Int      @default(0)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  generations       Generation[]
+  payments          Payment[]
+  
+  @@map("users")
+}
+
+model Generation {
+  id                String   @id @default(uuid())
+  userId            Int
+  user              User     @relation(fields: [userId], references: [id])
+  
+  photo1Url         String?
+  photo2Url         String?
+  romanticImageUrl  String?
+  videoUrl          String?
+  
+  status            GenerationStatus @default(WAITING_PHOTOS)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  @@map("generations")
+}
+
+model Payment {
+  id                String   @id @default(uuid())
+  userId            Int
+  user              User     @relation(fields: [userId], references: [id])
+  
+  amount            Int      // Amount in Telegram Stars
+  generationsCount  Int      // Number of generations purchased
+  telegramPaymentId String?  // Telegram payment charge ID
+  status            PaymentStatus @default(PENDING)
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  @@map("payments")
+}
+
+enum GenerationStatus {
+  WAITING_PHOTOS
+  PROCESSING_PHOTOS
+  GENERATING_IMAGE
+  GENERATING_VIDEO
+  COMPLETED
+  ERROR
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
