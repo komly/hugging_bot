@@ -1,15 +1,16 @@
-# Use Node.js 18 Alpine image
-FROM node:18-alpine
+# Use Node.js 18 image
+FROM node:18
 
 # Set working directory
 WORKDIR /app
 
 # Install system dependencies
-RUN apk add --no-cache \
+RUN apt-get update && apt-get install -y \
     python3 \
     make \
     g++ \
-    postgresql-client
+    postgresql-client \
+    && rm -rf /var/lib/apt/lists/*
 
 # Copy package files
 COPY package*.json ./
@@ -31,8 +32,8 @@ RUN pnpm db:generate
 RUN pnpm build
 
 # Create non-root user for bot
-RUN addgroup -g 1001 -S botuser
-RUN adduser -S botuser -u 1001
+RUN groupadd -g 1001 botuser
+RUN useradd -r -u 1001 -g botuser botuser
 
 # Change ownership of the app directory
 RUN chown -R botuser:botuser /app
